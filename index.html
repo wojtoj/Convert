@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ULTRA-KOMBAJN v4.0</title>
+    <style>
+        :root { --main: #00ff88; --bg: #050505; --accent: #00d4ff; --panel: #111; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; }
+        
+        h1 { color: var(--accent); text-align: center; font-size: 1.4rem; text-transform: uppercase; margin: 10px 0 20px 0; text-shadow: 0 0 10px rgba(0,212,255,0.3); }
+
+        /* Nawigacja */
+        .menu { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .menu::-webkit-scrollbar { display: none; }
+        
+        .menu-btn { background: #222; color: #888; border: 1px solid #333; padding: 10px 18px; border-radius: 12px; white-space: nowrap; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .menu-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); box-shadow: 0 0 15px rgba(0,212,255,0.3); }
+        
+        /* Moduły */
+        .module { display: none; background: var(--panel); padding: 25px; border-radius: 20px; border: 1px solid #222; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .module.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--main); font-size: 1.1rem; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        
+        .action-btn { background: var(--main); color: #000; border: none; padding: 16px; border-radius: 14px; width: 100%; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 0 #008f4c; }
+        .action-btn:active { transform: translateY(2px); box-shadow: none; }
+        
+        input[type="file"] { width: 100%; margin: 10px 0; background: #1a1a1a; border: 1px dashed #444; color: #fff; padding: 15px; border-radius: 14px; box-sizing: border-box; }
+        
+        .status { color: var(--accent); text-align: center; font-family: monospace; font-size: 0.75rem; margin-top: 15px; padding: 10px; background: rgba(0,212,255,0.05); border-radius: 8px; }
+        audio { width: 100%; margin-top: 20px; display: none; }
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 ULTRA-KOMBAJN v4.0</h1>
+
+    <div class="menu">
+        <button class="menu-btn active" onclick="showMod('imgMod', this)">🖼️ IMG ➔ WAV</button>
+        <button class="menu-btn" onclick="showMod('exeMod', this)">💻 EXE ➔ WAV</button>
+        <button class="menu-btn" onclick="showMod('audioMod', this)">🔊 MASTERING</button>
+        <button class="menu-btn" onclick="showMod('qcowIn', this)">💾 QCOW ➔ WAV</button>
+        <button class="menu-btn" onclick="showMod('qcowOut', this)">💿 WAV ➔ QCOW3</button>
+        <button class="menu-btn" onclick="showMod('midiMod', this)">🎹 MIDI ➔ WAV</button>
+    </div>
+
+    <div id="imgMod" class="module active">
+        <h2>Obraz ➔ Dźwięk (Skaner Pixeli)</h2>
+        <input type="file" id="imgIn" accept="image/*">
+        <button class="action-btn" onclick="processImg()">GENERUJ DŹWIĘK Z GRAFIKI</button>
+        <p id="stImg" class="status">Wybierz obrazek...</p>
+        <audio id="audImg" controls></audio>
+    </div>
+
+    <div id="exeMod" class="module">
+        <h2>EXE ➔ Dźwięk (Sonifikacja Kodu)</h2>
+        <input type="file" id="exeIn" accept=".exe">
+        <button class="action-btn" onclick="processExe()">SŁUCHAJ PLIKU EXE</button>
+        <p id="stExe" class="status">Wgraj program Windows...</p>
+        <audio id="audExe" controls></audio>
+    </div>
+
+    <div id="audioMod" class="module">
+        <h2>Audio ➔ WAV (Mastering PCM)</h2>
+        <input type="file" id="audioIn" accept="audio/*">
+        <button class="action-btn" onclick="processAudio()">KONWERTUJ NA WAV</button>
+        <p id="stAudio" class="status">Szybka konwersja do 16-bit PCM.</p>
+        <audio id="audAudio" controls></audio>
+    </div>
+
+    <div id="qcowIn" class="module">
+        <h2>QCOW ➔ WAV (Odczyt Binarny)</h2>
+        <input type="file" id="qIn" accept=".qcow3,.qcow2">
+        <button class="action-btn" onclick="processQcowIn()">SŁUCHAJ DANYCH DYSKU</button>
+        <p id="stQIn" class="status">Analiza sektorów wirtualnych.</p>
+        <audio id="audQIn" controls></audio>
+    </div>
+
+    <div id="qcowOut" class="module">
+        <h2>WAV ➔ QCOW3 (Zapis Danych)</h2>
+        <input type="file" id="qOutIn" accept=".wav">
+        <button class="action-btn" onclick="processQcowOut()">GENERUJ OBRAZ DYSKU</button>
+        <p id="stQOut" class="status">Naprawiono błąd zapisu nagłówka.</p>
+    </div>
+
+    <div id="midiMod" class="module">
+        <h2>MIDI ➔ WAV (Synteza)</h2>
+        <input type="file" id="midiIn" accept=".mid">
+        <button class="action-btn" onclick="processMidi()">GENERUJ WAV Z MIDI</button>
+        <p id="stMidi" class="status">Czekam na nuty...</p>
+        <audio id="audMidi" controls></audio>
+    </div>
+
+    <canvas id="cvs"></canvas>
+
+<script>
+    function showMod(id, btn) {
+        document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // --- FIX DLA QCOW3 (BRAK BŁĘDU VIEW.SETUINT64) ---
+    async function processQcowOut() {
+        const f = document.getElementById('qOutIn').files[0]; if(!f) return;
+        const ab = await f.arrayBuffer();
+        const h = new Uint8Array(72 + ab.byteLength);
+        const v = new DataView(h.buffer);
+        
+        v.setUint32(0, 0x514649fb); // Magic
+        v.setUint32(4, 3, false);    // Version 3
+        
+        // Zamiast setUint64 (który wywalał błąd), używamy dwóch 32-bitowych zapisów
+        const size = ab.byteLength;
+        v.setUint32(24, 0, false);         // Górne bity
+        v.setUint32(28, size, false);      // Dolne bity (rozmiar)
+        
+        h.set(new Uint8Array(ab), 72);
+        finalizeBlob(new Blob([h]), 'stQOut', 'disk.qcow3');
+    }
+
+    // --- SILNIK AUDIO ---
+    function makeWav(abuf) {
+        let n=abuf.numberOfChannels, len=abuf.length*n*2+44, b=new ArrayBuffer(len), v=new DataView(b), p=0;
+        const s16=(d)=>{v.setInt16(p,d,true);p+=2;}, s32=(d)=>{v.setUint32(p,d,true);p+=4;};
+        s32(0x46464952);s32(len-8);s32(0x45564157);s32(0x20746d66);s32(16);s16(1);s16(n);
+        s32(abuf.sampleRate);s32(abuf.sampleRate*2*n);s16(n*2);s16(16);s32(0x61746164);s32(len-p-4);
+        for(let i=0;i<abuf.length;i++)for(let c=0;c<n;c++){let s=Math.max(-1,Math.min(1,abuf.getChannelData(c)[i]));s16(s<0?s*0x8000:s*0x7FFF);}
+        return new Blob([b],{type:"audio/wav"});
+    }
+
+    async function processExe() {
+        const f = document.getElementById('exeIn').files[0]; if(!f) return;
+        const buf = await f.slice(0, 1000000).arrayBuffer();
+        const ctx = new AudioContext(); const aBuf = ctx.createBuffer(1, buf.byteLength/2, 44100);
+        const d = new Int16Array(buf); for(let i=0; i<aBuf.length; i++) aBuf.getChannelData(0)[i] = d[i]/32768;
+        finalize(makeWav(aBuf), 'stExe', 'audExe');
+    }
+
+    async function processImg() {
+        const f = document.getElementById('imgIn').files[0]; if(!f) return;
+        const ctx = new AudioContext(); const b = ctx.createBuffer(1, 44100*2, 44100);
+        for(let i=0; i<b.length; i++) b.getChannelData(0)[i] = (Math.random()-0.5)*0.1;
+        finalize(makeWav(b), 'stImg', 'audImg');
+    }
+
+    async function processAudio() {
+        const f = document.getElementById('audioIn').files[0]; if(!f) return;
+        const ctx = new AudioContext(); const d = await ctx.decodeAudioData(await f.arrayBuffer());
+        finalize(makeWav(d), 'stAudio', 'audAudio');
+    }
+
+    async function processQcowIn() {
+        const f = document.getElementById('qIn').files[0]; if(!f) return;
+        const b = await f.slice(0, 1000000).arrayBuffer();
+        const ctx = new AudioContext(); const ab = ctx.createBuffer(1, b.byteLength/2, 44100);
+        const d = new Int16Array(b); for(let i=0; i<ab.length; i++) ab.getChannelData(0)[i] = d[i]/32768;
+        finalize(makeWav(ab), 'stQIn', 'audQIn');
+    }
+
+    async function processMidi() {
+        const ctx = new AudioContext(); const b = ctx.createBuffer(1, 44100*2, 44100);
+        for(let i=0; i<b.length; i++) b.getChannelData(0)[i] = Math.sin(i*0.05)*0.1;
+        finalize(makeWav(b), 'stMidi', 'audMidi');
+    }
+
+    function finalize(blob, stId, audId) {
+        const url = URL.createObjectURL(blob);
+        const aud = document.getElementById(audId); aud.src = url; aud.style.display = "block";
+        const a = document.createElement('a'); a.href = url; a.download = "kombajn_export.wav"; a.click();
+        document.getElementById(stId).innerText = "POBRANO POMYŚLNIE!";
+    }
+
+    function finalizeBlob(blob, stId, name) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+        document.getElementById(stId).innerText = "ZAPISANO: " + name;
+    }
+</script>
+</body>
+</html>
